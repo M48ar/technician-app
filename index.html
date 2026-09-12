@@ -113,7 +113,7 @@
   .plan-card li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
   .plan-card li:last-child{border-bottom:none;}
   .plan-card input[type=checkbox]{width:18px;height:18px;flex-shrink:0;}
-  .plan-note{margin-top:10px;font-size:13px;color:var(--muted);}
+  .plan-note{margin-top:10px;font-size:13px;color:var(--muted);white-space:pre-wrap;}
 
   form#reportForm textarea{width:100%;font-family:'Tajawal',sans-serif;font-size:13.5px;
     border:1px solid var(--line);padding:9px;margin-bottom:12px;min-height:80px;resize:vertical;}
@@ -203,6 +203,7 @@
       <div class="card plan-card">
         <h3 id="planTitle">خطة اليوم</h3>
         <ul id="taskChecklist"></ul>
+        <div class="media-grid" id="planImagesDisplay"></div>
         <p class="plan-note" id="planNoteDisplay"></p>
       </div>
 
@@ -211,12 +212,12 @@
         <label>ملاحظات عن سير العمل</label>
         <textarea id="reportNote" placeholder="اكتب ملاحظاتك هنا"></textarea>
 
-        <label>إرفاق صور (حتى ٦ صور)</label>
+        <label>إرفاق صور (حتى ٢٠ صورة)</label>
         <input type="file" id="reportPhotos" accept="image/*" multiple>
         <p class="hint">الصور بترفع فورًا وبتتضغط تلقائيًا لتوفير بيانات الموبايل</p>
         <div class="media-grid" id="photoPreview"></div>
 
-        <label style="margin-top:14px">إرفاق فيديو (حتى ٢ فيديو، يُفضّل أقل من ٣٠ ثانية)</label>
+        <label style="margin-top:14px">إرفاق فيديو (حتى ٥ فيديوهات، يُفضّل الفيديوهات القصيرة لسرعة الرفع)</label>
         <input type="file" id="reportVideos" accept="video/*" multiple>
         <p class="hint">الفيديوهات الطويلة بتاخد وقت ودرجة إنترنت أكبر</p>
         <div class="media-grid" id="videoPreview"></div>
@@ -479,7 +480,10 @@ async function renderDetailPanel(id){
       <section>
         <h3>خطة يوم ${currentDate}</h3>
         <textarea id="planTasksInput" placeholder="كل سطر يمثل مهمة منفصلة">${(plan.tasks||[]).map(x=>x.text).join('\n')}</textarea>
-        <input type="text" id="planNoteInput" placeholder="ملاحظات عامة (اختياري)" value="${escapeHtml(plan.note||'')}">
+        <textarea id="planNoteInput" placeholder="تعليمات وملاحظات للفني (اختياري) — مثال: امشي على المسار ده، ركّز على كذا...">${escapeHtml(plan.note||'')}</textarea>
+        <label style="display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px">صور مرجعية للخطة (خريطة، موقع، ملاحظة على صورة...)</label>
+        <input type="file" id="planImagesInput" accept="image/*" multiple>
+        <div class="media-grid" id="planImagesPreview" style="margin-bottom:12px"></div>
         <button class="primary-btn" id="savePlanBtn">حفظ الخطة</button>
       </section>
       <section>
@@ -488,10 +492,39 @@ async function renderDetailPanel(id){
       </section>
     </div>`;
   document.getElementById('rmBtn').addEventListener('click', ()=>removeTechnician(id));
+
+  let currentPlanImages = (plan.images||[]).slice();
+  function renderPlanImagesPreview(){
+    const box = document.getElementById('planImagesPreview');
+    box.innerHTML = currentPlanImages.map((u,i)=>`
+      <span style="position:relative;display:inline-block">
+        <img src="${u}">
+        <button type="button" data-i="${i}" class="rmImgBtn" style="position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer">×</button>
+      </span>`).join('');
+    box.querySelectorAll('.rmImgBtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ currentPlanImages.splice(Number(btn.dataset.i),1); renderPlanImagesPreview(); });
+    });
+  }
+  renderPlanImagesPreview();
+  document.getElementById('planImagesInput').addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files).slice(0,10);
+    const box = document.getElementById('planImagesPreview');
+    box.innerHTML += '<span class="spinner-note">جارٍ رفع الصور...</span>';
+    try{
+      for(const f of files){
+        const blob = await compressImageToBlob(f);
+        const url = await uploadToCloudinary(blob, 'image');
+        currentPlanImages.push(url);
+      }
+    }catch(err){ console.error(err); alert('تعذّر رفع إحدى الصور، تأكد من الاتصال بالإنترنت'); }
+    e.target.value = '';
+    renderPlanImagesPreview();
+  });
+
   document.getElementById('savePlanBtn').addEventListener('click', async ()=>{
     const lines = document.getElementById('planTasksInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
     const note = document.getElementById('planNoteInput').value.trim();
-    const ok = await savePlanDoc(id, currentDate, {tasks: lines.map((text,i)=>({id:i, text})), note});
+    const ok = await savePlanDoc(id, currentDate, {tasks: lines.map((text,i)=>({id:i, text})), note, images: currentPlanImages});
     alert(ok ? 'تم حفظ الخطة' : 'حدث خطأ أثناء الحفظ، حاول مرة أخرى');
   });
 }
@@ -541,12 +574,13 @@ async function onTechPinSubmit(){
   }
 }
 async function loadTechView(id){
-  const plan = (await getPlan(id, currentDate)) || {tasks:[], note:''};
+  const plan = (await getPlan(id, currentDate)) || {tasks:[], note:'', images:[]};
   document.getElementById('planTitle').textContent = `خطة يوم ${currentDate}`;
   const list = document.getElementById('taskChecklist');
   list.innerHTML = (plan.tasks||[]).length ? plan.tasks.map(t=>`
     <li><input type="checkbox" data-task-id="${t.id}"><span>${escapeHtml(t.text)}</span></li>`).join('')
     : '<li style="color:var(--muted)">لا توجد مهام مُسندة لهذا اليوم</li>';
+  document.getElementById('planImagesDisplay').innerHTML = (plan.images||[]).map(u=>`<img src="${u}" loading="lazy" onclick="window.open('${u}','_blank')" style="cursor:pointer">`).join('');
   document.getElementById('planNoteDisplay').textContent = plan.note || '';
   clearMediaStaging();
 
@@ -562,7 +596,7 @@ function clearMediaStaging(){
   document.getElementById('reportVideos').value = '';
 }
 async function onPhotosChosen(e){
-  const files = Array.from(e.target.files).slice(0,6);
+  const files = Array.from(e.target.files).slice(0,20);
   const preview = document.getElementById('photoPreview');
   preview.innerHTML = '<span class="spinner-note">جارٍ رفع الصور...</span>';
   try{
@@ -579,7 +613,7 @@ async function onPhotosChosen(e){
   }
 }
 async function onVideosChosen(e){
-  const files = Array.from(e.target.files).slice(0,2);
+  const files = Array.from(e.target.files).slice(0,5);
   const preview = document.getElementById('videoPreview');
   preview.innerHTML = '<span class="spinner-note">جارٍ رفع الفيديو... قد يستغرق وقتًا حسب سرعة الإنترنت</span>';
   try{
