@@ -276,6 +276,7 @@ function todayStr(){
 }
 function genId(){ return 't_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toDownloadUrl(url){ return url.includes('/upload/') ? url.replace('/upload/', '/upload/fl_attachment/') : url; }
 
 /* ---------- Firestore helpers ---------- */
 async function loadTechnicians(){
@@ -533,8 +534,16 @@ function renderReportReadonly(report){
   const tasksHtml = (report.tasksStatus||[]).map(ts=>`
     <div class="task-row"><span class="mark ${ts.done?'yes':'no'}">${ts.done?'✓':'✕'}</span><span>${escapeHtml(ts.text)}</span></div>`).join('')
     || '<p style="font-size:13px;color:var(--muted)">لا يوجد مهام في خطة هذا اليوم</p>';
-  const photosHtml = (report.photos||[]).map(u=>`<img src="${u}" loading="lazy">`).join('');
-  const videosHtml = (report.videos||[]).map(u=>`<video src="${u}" controls muted></video>`).join('');
+  const photosHtml = (report.photos||[]).map(u=>`
+    <span style="position:relative;display:inline-block">
+      <img src="${u}" loading="lazy">
+      <a href="${toDownloadUrl(u)}" download target="_blank" title="تحميل" style="position:absolute;bottom:4px;left:4px;background:rgba(19,42,62,.85);color:#fff;border-radius:3px;padding:3px 7px;font-size:12px;text-decoration:none">⬇</a>
+    </span>`).join('');
+  const videosHtml = (report.videos||[]).map(u=>`
+    <span style="position:relative;display:inline-block">
+      <video src="${u}" controls muted></video>
+      <a href="${toDownloadUrl(u)}" download target="_blank" title="تحميل" style="position:absolute;bottom:4px;left:4px;background:rgba(19,42,62,.85);color:#fff;border-radius:3px;padding:3px 7px;font-size:12px;text-decoration:none">⬇</a>
+    </span>`).join('');
   return `
     ${tasksHtml}
     ${report.generalNote ? `<p style="font-size:13.5px;margin-top:10px">${escapeHtml(report.generalNote)}</p>` : ''}
