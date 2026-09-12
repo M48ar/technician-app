@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>سجل المتابعة الميدانية</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#132A3E">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="متابعة الفنيين">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#132A3E; --bg:#EEF1F4; --surface:#FFFFFF;
+    --accent:#C87F2A; --accent-dark:#A6631A;
+    --line:#D7DCE2; --green:#2F7A4F; --green-bg:#E7F2EB;
+    --red:#B23A34; --red-bg:#FBEAE9; --muted:#5C6B7A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;min-height:100vh;}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    padding:18px 0;border-bottom:2px solid var(--ink);margin-bottom:22px;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-mark{font-size:22px;font-weight:900;color:var(--surface);background:var(--ink);
+    width:46px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brand h1{margin:0;font-size:19px;font-weight:900;}
+  .brand p{margin:2px 0 0;font-size:12.5px;color:var(--muted);}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .controls input[type=date]{font-family:'Tajawal',sans-serif;border:1px solid var(--line);
+    background:var(--surface);padding:8px 10px;font-size:14px;color:var(--ink);}
+  .roleToggle{display:flex;border:1px solid var(--ink);}
+  .roleToggle button{font-family:'Tajawal',sans-serif;font-weight:700;font-size:13.5px;
+    background:var(--surface);color:var(--ink);border:none;padding:8px 18px;cursor:pointer;
+    border-left:1px solid var(--ink);}
+  .roleToggle button:last-child{border-left:none;}
+  .roleToggle button.active{background:var(--ink);color:var(--surface);}
+
+  h2{font-size:16px;font-weight:700;margin:0;}
+  h3{font-size:14.5px;font-weight:700;margin:0 0 10px;color:var(--ink);}
+
+  .overview{display:flex;margin-bottom:22px;border:1px solid var(--line);background:var(--surface);}
+  .stat{flex:1;padding:16px 18px;text-align:center;border-left:1px solid var(--line);}
+  .stat:last-child{border-left:none;}
+  .stat strong{display:block;font-size:26px;font-weight:900;}
+  .stat span{font-size:12px;color:var(--muted);}
+
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;}
+  @media (max-width:760px){.grid{grid-template-columns:1fr;}}
+  .panel{background:var(--surface);border:1px solid var(--line);}
+  .panel-head{padding:14px 16px;border-bottom:1px solid var(--line);}
+
+  .inline-form{display:flex;gap:6px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .inline-form input,.inline-form select{font-family:'Tajawal',sans-serif;font-size:13px;
+    border:1px solid var(--line);padding:7px 8px;flex:1;min-width:80px;}
+  .inline-form button{font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;
+    background:var(--ink);color:var(--surface);border:none;padding:7px 14px;cursor:pointer;}
+  .inline-form button:hover{background:var(--accent-dark);}
+
+  .roster-list{list-style:none;margin:0;padding:0;max-height:520px;overflow-y:auto;}
+  .roster-list li{display:flex;align-items:center;gap:10px;padding:11px 14px;
+    border-bottom:1px solid var(--line);cursor:pointer;font-size:13.5px;}
+  .roster-list li:hover{background:var(--bg);}
+  .roster-list li.selected{background:var(--bg);border-right:4px solid var(--accent);}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--red);}
+  .dot.done{background:var(--green);}
+  .roster-name{font-weight:700;} .roster-gov{font-size:11.5px;color:var(--muted);display:block;}
+  .empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px;}
+
+  .detail-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+    border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px;}
+  .danger{font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;background:none;
+    border:1px solid var(--red);color:var(--red);padding:6px 12px;cursor:pointer;}
+  .danger:hover{background:var(--red-bg);}
+  .detail-body{padding:16px;}
+  .detail-body section{margin-bottom:22px;}
+  .detail-body textarea,.detail-body input[type=text]{width:100%;font-family:'Tajawal',sans-serif;
+    font-size:13.5px;border:1px solid var(--line);padding:9px;margin-bottom:8px;}
+  .detail-body textarea{min-height:90px;resize:vertical;}
+  .primary-btn{font-family:'Tajawal',sans-serif;font-weight:700;font-size:13.5px;background:var(--ink);
+    color:var(--surface);border:none;padding:9px 20px;cursor:pointer;}
+  .primary-btn:hover{background:var(--accent-dark);}
+  .primary-btn:disabled{opacity:.55;cursor:default;}
+
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:4px 10px;}
+  .badge.ok{background:var(--green-bg);color:var(--green);}
+  .badge.pending{background:var(--red-bg);color:var(--red);}
+
+  .task-row{display:flex;align-items:flex-start;gap:8px;font-size:13.5px;padding:6px 0;
+    border-bottom:1px dashed var(--line);}
+  .task-row:last-child{border-bottom:none;}
+  .task-row .mark{font-weight:900;width:16px;flex-shrink:0;}
+  .task-row .mark.yes{color:var(--green);} .task-row .mark.no{color:var(--red);}
+
+  .media-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .media-grid img,.media-grid video{width:110px;height:110px;object-fit:cover;border:1px solid var(--line);}
+
+  #techView{max-width:560px;margin:0 auto;}
+  .card{background:var(--surface);border:1px solid var(--line);padding:16px;margin-bottom:16px;}
+  .card label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+  .card select,.card input{width:100%;font-family:'Tajawal',sans-serif;font-size:14px;
+    padding:9px;border:1px solid var(--line);margin-bottom:12px;}
+
+  .plan-card ul{list-style:none;margin:0;padding:0;}
+  .plan-card li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .plan-card li:last-child{border-bottom:none;}
+  .plan-card input[type=checkbox]{width:18px;height:18px;flex-shrink:0;}
+  .plan-note{margin-top:10px;font-size:13px;color:var(--muted);}
+
+  form#reportForm textarea{width:100%;font-family:'Tajawal',sans-serif;font-size:13.5px;
+    border:1px solid var(--line);padding:9px;margin-bottom:12px;min-height:80px;resize:vertical;}
+  .hint{font-size:11.5px;color:var(--muted);margin:-6px 0 12px;}
+
+  .history ul{list-style:none;margin:0;padding:0;}
+  .history li{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line);color:var(--muted);}
+  .history li:last-child{border-bottom:none;}
+
+  #submitStatus{font-size:13px;font-weight:700;margin:0;min-height:18px;}
+  #submitStatus.ok{color:var(--green);} #submitStatus.err{color:var(--red);}
+
+  .pin-gate{max-width:340px;margin:60px auto;background:var(--surface);border:1px solid var(--line);
+    padding:24px;text-align:center;}
+  .pin-gate input{width:100%;font-family:'Tajawal',sans-serif;font-size:20px;letter-spacing:4px;
+    text-align:center;border:1px solid var(--line);padding:10px;margin:14px 0;}
+  .pin-gate .err-msg{color:var(--red);font-size:12.5px;min-height:16px;}
+
+  footer{text-align:center;font-size:11.5px;color:var(--muted);margin-top:30px;}
+  [hidden]{display:none !important;}
+  .spinner-note{font-size:12.5px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">٢٧</div>
+      <div><h1>سجل المتابعة الميدانية</h1><p class="sub">تكليف الفنيين ومتابعة التنفيذ اليومي</p></div>
+    </div>
+    <div class="controls">
+      <input type="date" id="dateInput">
+      <div class="roleToggle">
+        <button data-role="admin" class="active">المسؤول</button>
+        <button data-role="tech">الفني</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PIN GATE -->
+  <div class="pin-gate" id="adminGate">
+    <h3>دخول المسؤول</h3>
+    <input type="password" inputmode="numeric" id="adminPinInput" placeholder="أدخل كود المسؤول" maxlength="8">
+    <button class="primary-btn" id="adminPinBtn" style="width:100%">دخول</button>
+    <p class="err-msg" id="adminPinErr"></p>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <main id="adminView" hidden>
+    <section class="overview">
+      <div class="stat"><strong id="statTotal">0</strong><span>فني مسجل</span></div>
+      <div class="stat"><strong id="statSubmitted">0</strong><span>أرسل تقريره اليوم</span></div>
+      <div class="stat"><strong id="statPending">0</strong><span>لم يرسل بعد</span></div>
+    </section>
+    <section class="grid">
+      <div class="panel roster">
+        <div class="panel-head"><h2>الفنيون</h2></div>
+        <form id="addTechForm" class="inline-form">
+          <input type="text" id="newTechName" placeholder="اسم الفني" required>
+          <select id="newTechGov" required></select>
+          <input type="text" id="newTechPin" placeholder="كود الفني" inputmode="numeric" maxlength="6" required style="max-width:90px">
+          <button type="submit">إضافة</button>
+        </form>
+        <ul id="techList" class="roster-list"></ul>
+      </div>
+      <div class="panel detail" id="detailPanel">
+        <p class="empty-state">اختر فنيًا من القائمة على اليمين لعرض خطته وتقريره</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- TECH VIEW -->
+  <main id="techView" hidden>
+    <div class="card" id="techSelectSection">
+      <label>اختر اسمك</label>
+      <select id="techSelfSelect"><option value="">-- اختر --</option></select>
+      <div id="techPinBox" hidden>
+        <label>أدخل كودك الخاص</label>
+        <input type="password" inputmode="numeric" id="techPinInput" maxlength="6">
+        <button class="primary-btn" id="techPinBtn" style="width:100%">دخول</button>
+        <p class="err-msg" id="techPinErr"></p>
+      </div>
+    </div>
+
+    <section id="techContent" hidden>
+      <div class="card plan-card">
+        <h3 id="planTitle">خطة اليوم</h3>
+        <ul id="taskChecklist"></ul>
+        <p class="plan-note" id="planNoteDisplay"></p>
+      </div>
+
+      <form id="reportForm" class="card">
+        <h3>إرسال تقرير اليوم</h3>
+        <label>ملاحظات عن سير العمل</label>
+        <textarea id="reportNote" placeholder="اكتب ملاحظاتك هنا"></textarea>
+
+        <label>إرفاق صور (حتى ٦ صور)</label>
+        <input type="file" id="reportPhotos" accept="image/*" multiple>
+        <p class="hint">الصور بترفع فورًا وبتتضغط تلقائيًا لتوفير بيانات الموبايل</p>
+        <div class="media-grid" id="photoPreview"></div>
+
+        <label style="margin-top:14px">إرفاق فيديو (حتى ٢ فيديو، يُفضّل أقل من ٣٠ ثانية)</label>
+        <input type="file" id="reportVideos" accept="video/*" multiple>
+        <p class="hint">الفيديوهات الطويلة بتاخد وقت ودرجة إنترنت أكبر</p>
+        <div class="media-grid" id="videoPreview"></div>
+
+        <button type="submit" class="primary-btn" id="submitBtn" style="margin-top:8px">إرسال التقرير</button>
+        <p id="submitStatus"></p>
+      </form>
+
+      <div class="card history">
+        <h3>آخر التقارير المرسلة</h3>
+        <ul id="historyList"><li>لا يوجد تقارير سابقة</li></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>البيانات مخزّنة على حساب Firebase وCloudinary الخاص بك</footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+/* ---------- config: safe to keep these values here ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCP395hYhtY2vk3GlA3yIkVgI-DFTjR-Pg",
+  authDomain: "school-cctv-maintenance.firebaseapp.com",
+  projectId: "school-cctv-maintenance",
+  storageBucket: "school-cctv-maintenance.firebasestorage.app",
+  messagingSenderId: "736986093828",
+  appId: "1:736986093828:web:21623a14c6669b6d175851"
+};
+const CLOUDINARY_CLOUD = "gg4vk34f";
+const CLOUDINARY_PRESET = "technician_uploads";
+// كود دخول المسؤول - غيّره لأي رقم تحبه
+const ADMIN_PIN = "2027";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const GOVS = ["القاهرة","الجيزة","الإسكندرية","الدقهلية","البحر الأحمر","البحيرة","الفيوم","الغربية",
+  "الإسماعيلية","المنوفية","المنيا","القليوبية","الوادي الجديد","السويس","أسوان","أسيوط","بني سويف",
+  "بورسعيد","دمياط","الشرقية","جنوب سيناء","كفر الشيخ","مطروح","الأقصر","قنا","شمال سيناء","سوهاج"];
+
+let technicians = [];
+let selectedTechId = null;
+let selfTechId = null;
+let currentDate = todayStr();
+let stagedPhotos = [];
+let stagedVideos = [];
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function genId(){ return 't_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- Firestore helpers ---------- */
+async function loadTechnicians(){
+  try{ const snap = await getDocs(collection(db,'technicians'));
+    return snap.docs.map(d=>({id:d.id, ...d.data()})); }
+  catch(e){ console.error(e); return []; }
+}
+async function addTechnicianDoc(t){
+  try{ await setDoc(doc(db,'technicians', t.id), {name:t.name, gov:t.gov, pin:t.pin}); return true; }
+  catch(e){ console.error(e); return false; }
+}
+async function deleteTechnicianDoc(id){
+  try{ await deleteDoc(doc(db,'technicians', id)); return true; }
+  catch(e){ console.error(e); return false; }
+}
+async function getPlan(techId, date){
+  try{ const snap = await getDoc(doc(db,'plans', `${techId}_${date}`));
+    return snap.exists() ? snap.data() : null; } catch(e){ return null; }
+}
+async function savePlanDoc(techId,date,data){
+  try{ await setDoc(doc(db,'plans',`${techId}_${date}`), {...data, techId, date}); return true; }
+  catch(e){ console.error(e); return false; }
+}
+async function getReport(techId,date){
+  try{ const snap = await getDoc(doc(db,'reports',`${techId}_${date}`));
+    return snap.exists() ? snap.data() : null; } catch(e){ return null; }
+}
+async function saveReportDoc(techId,date,data){
+  try{ await setDoc(doc(db,'reports',`${techId}_${date}`), {...data, techId, date}); return true; }
+  catch(e){ console.error(e); return false; }
+}
+async function listReportDatesForTech(techId){
+  try{
+    const q = query(collection(db,'reports'), where('techId','==',techId));
+    const snap = await getDocs(q);
+    return snap.docs.map(d=>d.data().date).sort().reverse();
+  }catch(e){ return []; }
+}
+
+/* ---------- Cloudinary upload ---------- */
+function compressImageToBlob(file, maxWidth=1280, quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, maxWidth/img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width*scale);
+        canvas.height = Math.round(img.height*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        canvas.toBlob(b=>b?resolve(b):reject(new Error('blob failed')), 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadToCloudinary(fileOrBlob, resourceType){
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${resourceType}/upload`;
+  const fd = new FormData();
+  fd.append('file', fileOrBlob);
+  fd.append('upload_preset', CLOUDINARY_PRESET);
+  fd.append('folder', 'technicians');
+  const res = await fetch(url, {method:'POST', body:fd});
+  if(!res.ok) throw new Error('upload failed: '+res.status);
+  const data = await res.json();
+  return data.secure_url;
+}
+
+/* ---------- init ---------- */
+async function init(){
+  document.getElementById('dateInput').value = currentDate;
+  const govSel = document.getElementById('newTechGov');
+  govSel.innerHTML = GOVS.map(g=>`<option value="${g}">${g}</option>`).join('');
+
+  document.getElementById('dateInput').addEventListener('change', onDateChange);
+  document.querySelectorAll('.roleToggle button').forEach(b=>{
+    b.addEventListener('click', ()=>switchRole(b.dataset.role));
+  });
+  document.getElementById('adminPinBtn').addEventListener('click', onAdminPinSubmit);
+  document.getElementById('adminPinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') onAdminPinSubmit(); });
+  document.getElementById('addTechForm').addEventListener('submit', onAddTechnician);
+  document.getElementById('techSelfSelect').addEventListener('change', onSelfSelect);
+  document.getElementById('techPinBtn').addEventListener('click', onTechPinSubmit);
+  document.getElementById('techPinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') onTechPinSubmit(); });
+  document.getElementById('reportForm').addEventListener('submit', onSubmitReport);
+  document.getElementById('reportPhotos').addEventListener('change', onPhotosChosen);
+  document.getElementById('reportVideos').addEventListener('change', onVideosChosen);
+
+  technicians = await loadTechnicians();
+  renderTechSelfOptions();
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+}
+
+function onAdminPinSubmit(){
+  const val = document.getElementById('adminPinInput').value.trim();
+  if(val === ADMIN_PIN){
+    document.getElementById('adminGate').hidden = true;
+    document.getElementById('adminView').hidden = false;
+    renderRoster(); renderOverview();
+  }else{
+    document.getElementById('adminPinErr').textContent = 'كود غير صحيح';
+  }
+}
+
+async function onDateChange(e){
+  currentDate = e.target.value;
+  if(!document.getElementById('adminView').hidden){ await renderOverview(); if(selectedTechId) await renderDetailPanel(selectedTechId); }
+  if(selfTechId) await loadTechView(selfTechId);
+}
+
+function switchRole(role){
+  document.querySelectorAll('.roleToggle button').forEach(b=>b.classList.toggle('active', b.dataset.role===role));
+  const adminGate = document.getElementById('adminGate');
+  const adminView = document.getElementById('adminView');
+  const techView = document.getElementById('techView');
+  if(role==='admin'){
+    techView.hidden = true;
+    if(adminView.hidden===false || adminGate.hidden===true){ /* already unlocked */ adminView.hidden=false; adminGate.hidden=true; }
+    else { adminGate.hidden = false; }
+  }else{
+    adminGate.hidden = true; adminView.hidden = true; techView.hidden = false;
+  }
+}
+
+/* ---------- admin: roster ---------- */
+async function onAddTechnician(e){
+  e.preventDefault();
+  const name = document.getElementById('newTechName').value.trim();
+  const gov = document.getElementById('newTechGov').value;
+  const pin = document.getElementById('newTechPin').value.trim();
+  if(!name || !pin) return;
+  const t = {id:genId(), name, gov, pin};
+  const ok = await addTechnicianDoc(t);
+  if(ok){
+    technicians.push(t);
+    document.getElementById('newTechName').value='';
+    document.getElementById('newTechPin').value='';
+    renderTechSelfOptions();
+    await renderRoster();
+    await renderOverview();
+  }else{
+    alert('تعذّرت إضافة الفني، تأكد من الاتصال بالإنترنت وحاول مرة أخرى');
+  }
+}
+async function removeTechnician(id){
+  if(!confirm('حذف هذا الفني من القائمة؟ (تقاريره السابقة تبقى محفوظة)')) return;
+  const ok = await deleteTechnicianDoc(id);
+  if(ok){
+    technicians = technicians.filter(t=>t.id!==id);
+    if(selectedTechId===id){
+      selectedTechId = null;
+      document.getElementById('detailPanel').innerHTML = '<p class="empty-state">اختر فنيًا من القائمة على اليمين</p>';
+    }
+    renderTechSelfOptions();
+    await renderRoster();
+    await renderOverview();
+  }
+}
+async function renderRoster(){
+  const list = document.getElementById('techList');
+  if(technicians.length===0){ list.innerHTML = '<li style="cursor:default">لا يوجد فنيون مسجلون بعد</li>'; return; }
+  const rows = await Promise.all(technicians.map(async t=>{
+    const report = await getReport(t.id, currentDate);
+    return {t, submitted: !!report};
+  }));
+  list.innerHTML = rows.map(({t,submitted})=>`
+    <li class="${t.id===selectedTechId?'selected':''}" data-id="${t.id}">
+      <span class="dot ${submitted?'done':''}"></span>
+      <span><span class="roster-name">${escapeHtml(t.name)}</span><span class="roster-gov">${escapeHtml(t.gov)}</span></span>
+    </li>`).join('');
+  list.querySelectorAll('li[data-id]').forEach(li=>{
+    li.addEventListener('click', ()=>{ selectedTechId = li.dataset.id; renderRoster(); renderDetailPanel(selectedTechId); });
+  });
+}
+async function renderOverview(){
+  const total = technicians.length;
+  let submitted = 0;
+  for(const t of technicians){ if(await getReport(t.id, currentDate)) submitted++; }
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statSubmitted').textContent = submitted;
+  document.getElementById('statPending').textContent = total - submitted;
+}
+async function renderDetailPanel(id){
+  const t = technicians.find(x=>x.id===id);
+  const panel = document.getElementById('detailPanel');
+  if(!t){ panel.innerHTML = '<p class="empty-state">اختر فنيًا من القائمة على اليمين</p>'; return; }
+  const plan = (await getPlan(id, currentDate)) || {tasks:[], note:''};
+  const report = await getReport(id, currentDate);
+  panel.innerHTML = `
+    <div class="detail-head">
+      <h2>${escapeHtml(t.name)} — ${escapeHtml(t.gov)}</h2>
+      <button class="danger" id="rmBtn">حذف الفني</button>
+    </div>
+    <div class="detail-body">
+      <section>
+        <h3>خطة يوم ${currentDate}</h3>
+        <textarea id="planTasksInput" placeholder="كل سطر يمثل مهمة منفصلة">${(plan.tasks||[]).map(x=>x.text).join('\n')}</textarea>
+        <input type="text" id="planNoteInput" placeholder="ملاحظات عامة (اختياري)" value="${escapeHtml(plan.note||'')}">
+        <button class="primary-btn" id="savePlanBtn">حفظ الخطة</button>
+      </section>
+      <section>
+        <h3>تقرير الفني ${report ? '<span class="badge ok">تم الإرسال</span>' : '<span class="badge pending">لم يتم الإرسال بعد</span>'}</h3>
+        ${renderReportReadonly(report)}
+      </section>
+    </div>`;
+  document.getElementById('rmBtn').addEventListener('click', ()=>removeTechnician(id));
+  document.getElementById('savePlanBtn').addEventListener('click', async ()=>{
+    const lines = document.getElementById('planTasksInput').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const note = document.getElementById('planNoteInput').value.trim();
+    const ok = await savePlanDoc(id, currentDate, {tasks: lines.map((text,i)=>({id:i, text})), note});
+    alert(ok ? 'تم حفظ الخطة' : 'حدث خطأ أثناء الحفظ، حاول مرة أخرى');
+  });
+}
+function renderReportReadonly(report){
+  if(!report) return '<p style="color:var(--muted);font-size:13px">لم يرسل الفني تقريرًا لهذا اليوم بعد.</p>';
+  const tasksHtml = (report.tasksStatus||[]).map(ts=>`
+    <div class="task-row"><span class="mark ${ts.done?'yes':'no'}">${ts.done?'✓':'✕'}</span><span>${escapeHtml(ts.text)}</span></div>`).join('')
+    || '<p style="font-size:13px;color:var(--muted)">لا يوجد مهام في خطة هذا اليوم</p>';
+  const photosHtml = (report.photos||[]).map(u=>`<img src="${u}" loading="lazy">`).join('');
+  const videosHtml = (report.videos||[]).map(u=>`<video src="${u}" controls muted></video>`).join('');
+  return `
+    ${tasksHtml}
+    ${report.generalNote ? `<p style="font-size:13.5px;margin-top:10px">${escapeHtml(report.generalNote)}</p>` : ''}
+    ${(photosHtml||videosHtml) ? `<div class="media-grid">${photosHtml}${videosHtml}</div>` : ''}
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px">أُرسل الساعة ${new Date(report.submittedAt).toLocaleTimeString('ar-EG')}</p>`;
+}
+
+/* ---------- tech view ---------- */
+function renderTechSelfOptions(){
+  const sel = document.getElementById('techSelfSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">-- اختر --</option>' + technicians.map(t=>`<option value="${t.id}">${escapeHtml(t.name)} — ${escapeHtml(t.gov)}</option>`).join('');
+  if(technicians.some(t=>t.id===current)) sel.value = current;
+}
+function onSelfSelect(e){
+  const id = e.target.value;
+  document.getElementById('techContent').hidden = true;
+  const pinBox = document.getElementById('techPinBox');
+  document.getElementById('techPinErr').textContent = '';
+  document.getElementById('techPinInput').value = '';
+  if(!id){ pinBox.hidden = true; selfTechId = null; return; }
+  pinBox.hidden = false;
+  pinBox.dataset.pendingId = id;
+}
+async function onTechPinSubmit(){
+  const pinBox = document.getElementById('techPinBox');
+  const id = pinBox.dataset.pendingId;
+  const t = technicians.find(x=>x.id===id);
+  const val = document.getElementById('techPinInput').value.trim();
+  if(!t) return;
+  if(val === t.pin){
+    selfTechId = id;
+    document.getElementById('techContent').hidden = false;
+    await loadTechView(id);
+  }else{
+    document.getElementById('techPinErr').textContent = 'كود غير صحيح';
+  }
+}
+async function loadTechView(id){
+  const plan = (await getPlan(id, currentDate)) || {tasks:[], note:''};
+  document.getElementById('planTitle').textContent = `خطة يوم ${currentDate}`;
+  const list = document.getElementById('taskChecklist');
+  list.innerHTML = (plan.tasks||[]).length ? plan.tasks.map(t=>`
+    <li><input type="checkbox" data-task-id="${t.id}"><span>${escapeHtml(t.text)}</span></li>`).join('')
+    : '<li style="color:var(--muted)">لا توجد مهام مُسندة لهذا اليوم</li>';
+  document.getElementById('planNoteDisplay').textContent = plan.note || '';
+  clearMediaStaging();
+
+  const dates = (await listReportDatesForTech(id)).slice(0,6);
+  const hist = document.getElementById('historyList');
+  hist.innerHTML = dates.length ? dates.map(d=>`<li>✓ تم إرسال تقرير يوم ${d}</li>`).join('') : '<li>لا يوجد تقارير سابقة</li>';
+}
+function clearMediaStaging(){
+  stagedPhotos = []; stagedVideos = [];
+  document.getElementById('photoPreview').innerHTML = '';
+  document.getElementById('videoPreview').innerHTML = '';
+  document.getElementById('reportPhotos').value = '';
+  document.getElementById('reportVideos').value = '';
+}
+async function onPhotosChosen(e){
+  const files = Array.from(e.target.files).slice(0,6);
+  const preview = document.getElementById('photoPreview');
+  preview.innerHTML = '<span class="spinner-note">جارٍ رفع الصور...</span>';
+  try{
+    stagedPhotos = [];
+    for(const f of files){
+      const blob = await compressImageToBlob(f);
+      const url = await uploadToCloudinary(blob, 'image');
+      stagedPhotos.push(url);
+    }
+    preview.innerHTML = stagedPhotos.map(u=>`<img src="${u}">`).join('');
+  }catch(err){
+    console.error(err);
+    preview.innerHTML = '<span style="color:var(--red);font-size:12.5px">تعذّر رفع إحدى الصور، تأكد من الاتصال بالإنترنت</span>';
+  }
+}
+async function onVideosChosen(e){
+  const files = Array.from(e.target.files).slice(0,2);
+  const preview = document.getElementById('videoPreview');
+  preview.innerHTML = '<span class="spinner-note">جارٍ رفع الفيديو... قد يستغرق وقتًا حسب سرعة الإنترنت</span>';
+  try{
+    stagedVideos = [];
+    for(const f of files){
+      const url = await uploadToCloudinary(f, 'video');
+      stagedVideos.push(url);
+    }
+    preview.innerHTML = stagedVideos.map(u=>`<video src="${u}" controls muted></video>`).join('');
+  }catch(err){
+    console.error(err);
+    preview.innerHTML = '<span style="color:var(--red);font-size:12.5px">تعذّر رفع الفيديو، تأكد من الاتصال بالإنترنت</span>';
+  }
+}
+async function onSubmitReport(e){
+  e.preventDefault();
+  if(!selfTechId) return;
+  const status = document.getElementById('submitStatus');
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  status.textContent = 'جارٍ الإرسال...'; status.className = '';
+
+  const checkboxes = document.querySelectorAll('#taskChecklist input[type=checkbox]');
+  const tasksStatus = Array.from(checkboxes).map(cb=>({
+    id: cb.dataset.taskId, text: cb.parentElement.querySelector('span').textContent, done: cb.checked
+  }));
+  const report = {
+    tasksStatus,
+    generalNote: document.getElementById('reportNote').value.trim(),
+    photos: stagedPhotos,
+    videos: stagedVideos,
+    submittedAt: new Date().toISOString()
+  };
+  const ok = await saveReportDoc(selfTechId, currentDate, report);
+  btn.disabled = false;
+  if(ok){
+    status.textContent = 'تم إرسال التقرير بنجاح ✓'; status.className = 'ok';
+    document.getElementById('reportNote').value='';
+    clearMediaStaging();
+    await loadTechView(selfTechId);
+  }else{
+    status.textContent = 'حدث خطأ أثناء الإرسال، حاول مرة أخرى'; status.className = 'err';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
